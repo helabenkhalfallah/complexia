@@ -141,6 +141,60 @@ You can specify target hardware using `--cpuProfile`:
 
 ---
 
+
+---
+
+## 💾 Memory Cost Model
+
+In addition to time complexity and instruction count, **Complexia** estimates **real memory consumption** using instruction-level annotations from the IFG (Instruction Flow Graph).
+
+### 📊 Memory Estimation Equation:
+
+```txt
+Total Memory = ∑(Static Allocations + Dynamic Allocations × Growth Rate)
+             = ∑ (object_size + array_size(n) + return_structures + temp buffers)
+```
+
+### 📌 IFG-based Memory Tracking:
+
+Each instruction is annotated with memory-relevant metadata:
+
+- `allocatesMemory`: `true | false`
+- `allocationSize`: e.g. `n * 8 bytes` for `new Array(n)`
+- `mutationType`: e.g. `.push`, `.concat`, `.set`
+- `inputDependent`: Indicates whether allocation scales with input size
+- `scopeLifetime`: Helps estimate whether memory persists (`local`, `returned`, `global`)
+
+### 🔍 Example Memory Estimate:
+
+```json
+{
+  "function": "bufferedSum",
+  "estimatedMemoryComplexity": "O(n)",
+  "memoryBytes": "n * 8 + 64",
+  "memoryNotes": [
+    "Array of size n allocated",
+    "8 bytes per element",
+    "Temporary buffer: 64 bytes"
+  ]
+}
+```
+
+### 💡 Optional Memory Profiles
+
+Just like CPU, users may define memory profiles (e.g., element sizes, object headers):
+
+```json
+{
+  "defaultElementSize": 8,
+  "objectHeader": 16,
+  "stringOverhead": 40
+}
+```
+
+Memory cost can then be modeled per platform or JS engine characteristics.
+
+---
 ## 📚 Citation
 
 ```bibtex
