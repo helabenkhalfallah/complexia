@@ -1,23 +1,41 @@
 # 📈 Complexia
 
-> **ACM 2025 Publication**  
-> _Complexia: Static Inference of Algorithmic Complexity and Resource Costs via JavaScript/TypeScript AST Analysis_  
-> 📄 [ACM Publication Link – Coming Soon]
+> **ACM 2025 (To Appear)**  
+> _**Complexia: Static Inference of Algorithmic Complexity and Execution Cost via JS/TS Graph Analysis**_  
+> 📄 [Publication Link – Coming Soon]
 
 ---
 
 ## ✨ Overview
 
-**Complexia** is a formal and deterministic static analysis tool that estimates **algorithmic time complexity**, **memory allocation patterns**, and **approximate instruction counts** from JavaScript/TypeScript source code using AST traversal.
+**Complexia** is a formal and deterministic static analysis tool for JavaScript and TypeScript that extracts:
 
-Designed for performance-aware development and pre-runtime feedback, Complexia translates raw source code into a reproducible **complexity signature** using structural program analysis.
+- ✅ **Asymptotic Complexity (Big O)** via control flow analysis,  
+- ✅ **Real Instruction Cost** via weighted instruction traversal,  
+- ✅ **Estimated Memory Allocation**,  
+- ✅ **Platform-specific CPU Time** based on IC × CPI / Clock Rate.
 
-The system computes:
+Complexia introduces two **original graph models** proposed by Héla Ben Khalfallah:
 
-- **Time Complexity (Big O)**: Detects O(1), O(n), O(n log n), O(n²), etc. via static pattern recognition.
-- **Static Memory Estimation**: Infers allocation footprints from variable usage and data structures.
-- **Instruction Count Estimation**: Converts AST-node cost heuristics into approximate op counts.
-- **Code Block Profiling**: Identifies dominant functions, loops, and hotspots at dev time.
+- 📊 **OFG** – *O Flow Graph*: estimates structural **time and memory complexity** (Big O).  
+- 🧮 **IFG** – *Instruction Flow Graph*: computes weighted **instruction count** and **allocation cost**.
+
+By combining graph semantics with classical CPU performance modeling, Complexia provides **pre-runtime performance estimation**, helpful for optimization, benchmarking, and code complexity regression.
+
+---
+
+## ⚙️ Architecture Summary
+
+| Graph | Purpose | Captures | Output |
+|-------|---------|----------|--------|
+| **OFG** | Estimate asymptotic complexity | Loops, branches, recursion | `O(n)`, `O(n log n)`, etc. |
+| **IFG** | Compute real execution cost | Instruction weights, function calls | `instructionCount`, `memoryBytes` |
+
+Final CPU time is derived using:
+
+```txt
+CPU Time = IC × CPI / Clock Rate
+```
 
 ---
 
@@ -28,56 +46,98 @@ npm install -D complexia
 ```
 
 ### Prerequisites
-
 - Node.js ≥ 18.x
-- TypeScript project or plain JS/TS files
+- TypeScript or JavaScript project
 
 ---
 
 ## 🚦 CLI Usage
 
-Run the tool with:
-
 ```bash
-npx complexia analyze   --srcDir "./examples"   --outputDir "./reports"   --format html,json
+npx complexia analyze \
+  --srcDir "./examples" \
+  --outputDir "./reports" \
+  --format html,json \
+  --cpuProfile "./profiles/intel-i7.json"
 ```
 
-### Supported formats:
-
-- `html`: Human-readable performance dashboard
-- `json`: Machine-readable output for pipeline integration
+### Output formats:
+- `html`: Developer-friendly complexity dashboard
+- `json`: Machine-readable for CI/CD or research
 
 ---
 
-## 🔬 Reproducing Evaluation Results
+## 🔬 Example Analysis Output
 
-To reproduce the experimental pipeline and complexity estimation on sample projects:
-
-```bash
-git clone https://github.com/helabenkhalfallah/complexia.git
-cd complexia
-npm install
-npm run analyze -- --srcDir "./examples" --outputDir "./reports" --format html,json
+```json
+{
+  "function": "sumSquares",
+  "estimatedTimeComplexity": "O(n)",
+  "estimatedMemoryComplexity": "O(1)",
+  "instructionCount": "3n + 2",
+  "memoryBytes": "8",
+  "cpuModel": {
+    "CPI": 2,
+    "clockGHz": 2,
+    "cpuTime": "3n ns"
+  }
+}
 ```
 
-### Output:
+---
 
-📂 `reports/`  
-- `complexity-report/ComplexityOverview.json`  
-- `complexity-report/ComplexityOverview.html`  
-- `complexity-report/OpsEstimates.json`  
-- Optional heatmaps, AST snapshots, and diagnostics
+## 📐 CPU Performance Model
 
-> **Note**: The included `examples/` folder demonstrates loop nesting, recursion, and branching constructs across common complexity classes. A full benchmarked dataset will be released in conjunction with the ACM publication.
+Complexia integrates the classical CPU performance equation:
+
+```txt
+CPU Time = Instruction Count × CPI / Clock Rate
+```
+
+You can specify target hardware using `--cpuProfile`:
+
+```json
+{
+  "name": "Intel i7",
+  "CPI": 1.5,
+  "clockGHz": 3.2
+}
+```
+
+---
+
+## 💡 Use Cases
+
+- ✅ Detect complexity regressions during CI
+- ✅ Pre-runtime performance estimation
+- ✅ Algorithm class verification for education
+- ✅ Baseline analysis for green computing models (e.g., [emissia](https://github.com/helabenkhalfallah/emissia))
 
 ---
 
 ## 📦 Repository Structure
 
-- `src/` – Core AST traversal and complexity inference engine
-- `cli/` – Command-line interface for batch analysis
-- `examples/` – Reference programs with known complexity
-- `reports/` – HTML/JSON output for review and inspection
+```
+.
+├── src/          # Graph builders and cost engine
+├── cli/          # CLI interface and argument parsing
+├── examples/     # Sample algorithms with known complexity
+├── reports/      # HTML/JSON output
+├── profiles/     # Hardware profiles (CPI, clock, memory)
+```
+
+---
+
+## 🧠 Theory & Validation
+
+### Formal Architecture:
+- **OFG** = asymptotic structure graph (Big O via loop/call analysis) *(Proposed by Héla Ben Khalfallah)*
+- **IFG** = instruction-weighted graph (IC + memory cost) *(Proposed by Héla Ben Khalfallah)*
+- **Final Cost** = `IC × CPI / Clock Rate` (with optional memory footprint)
+
+### Scientific Grounding:
+- Based on static analysis, CFG/DFG theory, cost semantics
+- Deterministic and platform-independent (but configurable)
 
 ---
 
@@ -86,21 +146,12 @@ npm run analyze -- --srcDir "./examples" --outputDir "./reports" --format html,j
 ```bibtex
 @inproceedings{benkhalfallah2025complexia,
   author    = {Héla Ben Khalfallah},
-  title     = {Complexia: Static Inference of Algorithmic Complexity and Resource Costs via JavaScript/TypeScript AST Analysis},
+  title     = {Complexia: Static Inference of Algorithmic Complexity and Execution Cost via JavaScript/TypeScript Graph Analysis},
   booktitle = {Proceedings of the ACM Conference on Programming Languages (ACM SIGPLAN)},
   year      = {2025},
   note      = {To appear},
 }
 ```
-
----
-
-## 🧠 Use Cases
-
-- Developer feedback loop for performance at dev time
-- Complexity regression detection in CI/CD
-- Algorithm class verification for educational use
-- Input to sustainability models (e.g., [`emissia`](https://github.com/helabenkhalfallah/emissia))
 
 ---
 
@@ -112,7 +163,7 @@ cd complexia
 npm install
 ```
 
-Run:
+Then run analysis with:
 
 ```bash
 npm run analyze -- --srcDir "./examples" --outputDir "./reports" --format html,json
@@ -122,4 +173,4 @@ npm run analyze -- --srcDir "./examples" --outputDir "./reports" --format html,j
 
 ## 📜 License
 
-Licensed under the MIT License. See the [LICENSE](./LICENSE) file.
+MIT License — See [LICENSE](./LICENSE)
